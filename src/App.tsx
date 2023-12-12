@@ -35,6 +35,9 @@ function App() {
       body: JSON.stringify({ proof: proof.proofString, address: address })
     });
 
+    if(response.status == 200){
+
+
     // artifical delay for indexer
     setTimeout(async () => {
       console.log(await response.text())
@@ -57,6 +60,9 @@ function App() {
       setImage(json[0].image)
       toggleModal(true)
     }, 1000)
+  } else {
+    alert('Something went wrong with the request, check the console.')
+  }
   }
   return (
     <>
