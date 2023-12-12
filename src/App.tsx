@@ -17,6 +17,7 @@ function App() {
   const [image, setImage] = useState<any>(null)
   const [loadingTreasure, setLoadingTreasure] = useState(false)
   const [txHash, setTxHash] = useState('')
+  const [title, setTitle] = useState('')
 
   const onClick = () => {
     setOpenConnectModal(true)
@@ -58,6 +59,7 @@ function App() {
       const res = await fetch(`https://metadata.sequence.app/tokens/arbitrum/${transactionHistory!.transactions[0]!.transfers[0].contractAddress}/${transactionHistory!.transactions[0]!.transfers[0].tokenIds[0]}`)
       const json = await res.json()
       setImage(json[0].image)
+      setTitle(json[0].name)
       toggleModal(true)
     }, 1000)
   } else {
@@ -150,6 +152,8 @@ function App() {
                     >
                     <Box justifyContent={'center'}>
                     <p>you found a collectible</p>
+                    <br/>
+                    <p>{title}</p>
                     </Box>
                     <Box justifyContent={'center'}>
                     <img src={image!} width={300}/>
