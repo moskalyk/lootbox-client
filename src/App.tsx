@@ -1,17 +1,18 @@
-import { useState } from 'react'
-import { Button, Modal, Box, Spinner } from '@0xsequence/design-system'
+import React, { useState } from 'react'
+import { Button, Modal, Box, Spinner, useTheme } from '@0xsequence/design-system'
 import { AnimatePresence } from 'framer-motion'
 import { useOpenConnectModal, signEthAuthProof } from '@0xsequence/kit'
 import { useDisconnect, useAccount, useWalletClient } from 'wagmi'
 import { SequenceIndexer } from '@0xsequence/indexer'
+import treasure from './assets/treasure.png'
 
 function App() {
   const { setOpenConnectModal } = useOpenConnectModal()
   const { data: walletClient }: any = useWalletClient({chainId: 137})
   const { isConnected, address } = useAccount()
   const { disconnect } = useDisconnect()
+  const {setTheme} = useTheme()
 
-  const [minted, _] = useState(false)
   const [isOpen, toggleModal] = useState(false)
   const [treasureIsOpen, setTtreasureIsOpen] = useState(false)
   const [image, setImage] = useState<any>(null)
@@ -19,7 +20,11 @@ function App() {
   const [txHash, setTxHash] = useState('')
   const [title, setTitle] = useState('')
 
+  React.useEffect(() => {
+    if(!isConnected) setTheme('light')
+  }, [isConnected])
   const onClick = () => {
+    setTheme('dark')
     setOpenConnectModal(true)
   }
 
@@ -68,7 +73,7 @@ function App() {
   }
   return (
     <>
-      {
+      {/* {
         ! 
           minted 
         ? 
@@ -76,30 +81,41 @@ function App() {
             <br/>
             <br/>
               <p style={{
+                color:'black',
                 fontSize: '20px',
                 display: 'flex',
                 justifyContent: 'center',
                 width: '100vw', // Full
-                marginBottom: '-130px'
+                marginBottom: '-80px'
               }}>lootbox</p>
           </> 
         : 
           null
-      }
+      } */}
       {
         !
           isConnected 
         ? 
           <>
             <div style={{
-              display: 'flex',
               justifyContent: 'center',
-              alignItems: 'center',
-              height: '100vh', // Full height of the viewport
               width: '100vw', // Full
               }}
             >
+              <br/>
+            <Box justifyContent={'center'}>
+              <p>l o o t b o x</p>
+            </Box>
+            <br/>
+
+            <Box justifyContent={'center'}>
+              <img src={treasure} width={200}/>
+            </Box>
+            <br/>
+
+            <Box justifyContent={'center'}>
               <Button label="connect" onClick={() => onClick()}/>
+            </Box>
             </div>
           </>
         :
@@ -151,8 +167,9 @@ function App() {
                       padding="16"
                     >
                     <Box justifyContent={'center'}>
-                    <p>you found a collectible</p>
-                    <br/>
+                    <p>You found a collectible!</p>
+                    </Box>
+                    <Box justifyContent={'center'}>
                     <p>{title}</p>
                     </Box>
                     <Box justifyContent={'center'}>
