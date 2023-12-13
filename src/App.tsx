@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useOpenConnectModal, signEthAuthProof } from '@0xsequence/kit'
 import { useDisconnect, useAccount, useWalletClient } from 'wagmi'
 import { SequenceIndexer } from '@0xsequence/indexer'
-import treasure from './assets/treasure.png'
+import maze from './assets/maze.png'
 
 function App() {
   const { setOpenConnectModal } = useOpenConnectModal()
@@ -20,11 +20,12 @@ function App() {
   const [txHash, setTxHash] = useState('')
   const [title, setTitle] = useState('')
 
+  setTheme('dark')
   React.useEffect(() => {
-    if(!isConnected) setTheme('light')
+    // if(!isConnected) setTheme('light')
   }, [isConnected])
   const onClick = () => {
-    setTheme('dark')
+    // setTheme('dark')
     setOpenConnectModal(true)
   }
 
@@ -104,12 +105,22 @@ function App() {
             >
               <br/>
             <Box justifyContent={'center'}>
-              <p>l o o t b o x</p>
+              <p>a l o o t b o x</p>
+            </Box>
+            <br/>
+            
+
+            <Box justifyContent={'center'}>
+              <img src={maze} width={200}/>
             </Box>
             <br/>
 
             <Box justifyContent={'center'}>
-              <img src={treasure} width={200}/>
+              <p>... you've made your way through the internet, and you've found yourself here</p>
+            </Box>
+            <br/>
+            <Box justifyContent={'center'}>
+              <p>connect for reward</p>
             </Box>
             <br/>
 
