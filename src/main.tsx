@@ -9,25 +9,25 @@ import { KitWalletProvider } from '@0xsequence/kit-wallet'
 
 import { configureChains, createConfig, WagmiConfig } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
-import { arbitrum } from 'wagmi/chains'
+import { bsc } from 'wagmi/chains'
 
 function Dapp() {
-  const { chains, publicClient, webSocketPublicClient } = configureChains(
-    [arbitrum],
-    [publicProvider()],
-  )
+	const { chains, publicClient, webSocketPublicClient } = configureChains(
+		[bsc],
+		[publicProvider()],
+	)
   
 	const connectors = getKitConnectWallets([
 		google({
 			chains,
 			options: {
-				defaultNetwork: 42161
+				defaultNetwork: 56
 			}
 		}),
 		apple({
 			chains,
 			options: {
-				defaultNetwork: 42161
+				defaultNetwork: 56
 			}
 		}),
 		metamask({
@@ -36,17 +36,17 @@ function Dapp() {
 		email({
 			chains,
 			options: {
-				defaultNetwork: 42161
+				defaultNetwork: 56
 			}
 		})
 	])  
     
-  const config = createConfig({
-    autoConnect: true,
-    publicClient,
-    webSocketPublicClient,
-    connectors
-  })
+	const config = createConfig({
+		autoConnect: true,
+		publicClient,
+		webSocketPublicClient,
+		connectors
+	})
 
   const kitConfig: any = {
 		projectAccessKey: 'qXo22RTxznHmanNpf1ftKeQBAAAAAAAAA',
@@ -65,7 +65,7 @@ function Dapp() {
       <KitProvider config={kitConfig}>
 		<KitWalletProvider>
 			<ThemeProvider>
-			<App />
+				<App />
 			</ThemeProvider>
 		</KitWalletProvider>
       </KitProvider>
