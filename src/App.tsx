@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button, Box, Spinner, useTheme } from '@0xsequence/design-system'
 import { useOpenConnectModal, signEthAuthProof } from '@0xsequence/kit'
 import { useDisconnect, useAccount, useWalletClient } from 'wagmi'
@@ -28,13 +28,10 @@ function App() {
   const { isConnected, address } = useAccount()
   const { disconnect } = useDisconnect()
   const {setTheme} = useTheme()
-  const [treasureIsOpen, setTtreasureIsOpen] = useState(false)
-  const [image, setImage] = useState<any>(null)
   const [loadingTreasure, setLoadingTreasure] = useState(false)
-  const [title, setTitle] = useState('')
   const [inDungeon, setInDungeon] = useState(true)
   const { setOpenWalletModal } = useOpenWalletModal()
-  const [showElement, setShowElement] = useState(true);
+  const [_, setShowElement] = useState(true);
   const [mintLoading, setMintLoading] = useState(false);
   
   setTheme('dark')
@@ -42,7 +39,7 @@ function App() {
   const [items, setItems] = useState<any>([])
   const [loaded, setLoaded] = useState(false);
   const [space, setSpace] = useState(false);
-  const [proof, setProof] = useState<any>(null);
+  const [proof, __] = useState<any>(null);
 
   useEffect(() =>{
 
@@ -192,7 +189,7 @@ function App() {
 
     const contract = new ethers.Contract(contractAddress, abi, provider);
 
-    contract.on("Transfer", async (from, to, tokenId, event) => {
+    contract.on("Transfer", async (_, to, __, event) => {
 
       if(to.toLowerCase() == proofVar.toLowerCase()){
         txHash = event.transactionHash
@@ -216,7 +213,7 @@ function App() {
       init =false
     })
 
-    socket.on('pong', async (data: any) => {
+    socket.on('pong', async (_: any) => {
       console.log('true')
     })
 
@@ -234,8 +231,6 @@ function App() {
       }, 5000)
     })
   }
-
-  const iframeRef = useRef<any>(null);
 
   return (
     <>
@@ -356,7 +351,7 @@ function App() {
                >
                 <br/>
                 <br/>
-                {loaded ? <div className={`items-container fade-in`} style={{width: '100vw', marginTop: '20px', overFlow: 'auto'}}>
+                {loaded ? <div className={`items-container fade-in`} style={{width: '100vw', marginTop: '20px', overflow: 'auto'}}>
                 { !loadingTreasure ? <div style={{zIndex: 10, color: 'white', cursor: 'pointer', position:'fixed', top: '30px', right: txHash != '' ? '45vw': '46vw'}}>
                 { mintLoading ? <div style={{
                   position: 'fixed', 
