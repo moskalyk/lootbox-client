@@ -1,62 +1,52 @@
-import React, { useState, useEffect } from 'react'
-import { Button, Modal, Box, Spinner, useTheme } from '@0xsequence/design-system'
-import { AnimatePresence } from 'framer-motion'
+import React, { useState, useEffect, useRef } from 'react'
+import { Button, Box, Spinner, useTheme } from '@0xsequence/design-system'
 import { useOpenConnectModal, signEthAuthProof } from '@0xsequence/kit'
 import { useDisconnect, useAccount, useWalletClient } from 'wagmi'
 import { ethers } from "ethers";
 import {contractABI as abi} from './abi.ts'
 import maze from './assets/maze.png'
 import socketIOClient from "socket.io-client";
-import { SequenceIndexer } from '@0xsequence/indexer'
 import { useOpenWalletModal } from '@0xsequence/kit-wallet'
 
 import './lootExpanse/styles.css'
 
-const ENDPOINT = "http://localhost:3000";  // Change this to your server's address
-const contractAddress = "0xc8a3e4268e9fccaeedb26c0fb22e7653c76d2771";
+// const ENDPOINT = "http://localhost:3000"; 
+const ENDPOINT = "http://155.138.156.102:3000"; 
+// const ENDPOINT = "https://lootbox.ngrok.dev";
+const contractAddress = "0xdc85610fd15b64d1b48db4ebaabc61ee2f62fb6d";
 
 let init = false
 let count = 0
-let socket = null
-// let inDungeon_ = true; 
+let socket: any = null
+let live = false;
+let proofVar: any = null
+let txHash: any = ''
+
 function App() {
   const { setOpenConnectModal } = useOpenConnectModal()
   const { data: walletClient }: any = useWalletClient({chainId: 56})
   const { isConnected, address } = useAccount()
   const { disconnect } = useDisconnect()
   const {setTheme} = useTheme()
-
-  // const [socket, setSocket] = useState<any>(null);
-
-  const [isOpen, toggleModal] = useState(false)
   const [treasureIsOpen, setTtreasureIsOpen] = useState(false)
   const [image, setImage] = useState<any>(null)
   const [loadingTreasure, setLoadingTreasure] = useState(false)
-  const [txHash, setTxHash] = useState('')
   const [title, setTitle] = useState('')
   const [inDungeon, setInDungeon] = useState(true)
-
   const { setOpenWalletModal } = useOpenWalletModal()
-
+  const [showElement, setShowElement] = useState(true);
+  const [mintLoading, setMintLoading] = useState(false);
+  
   setTheme('dark')
 
-  // const [mutex, setMutex] = useState(false)
-  const [items, setItems] = useState([])
-
+  const [items, setItems] = useState<any>([])
   const [loaded, setLoaded] = useState(false);
   const [space, setSpace] = useState(false);
-
-  useEffect(() => {
-    
-  }, [loaded])
-
-  useEffect(() => {
-    
-  }, [inDungeon])
+  const [proof, setProof] = useState<any>(null);
 
   useEffect(() =>{
 
-  }, [items])
+  }, [items, loaded, inDungeon, socket, loadingTreasure, mintLoading, proof, txHash])
 
   const [loadCount, setLoadCount] = useState(0);
 
@@ -72,125 +62,165 @@ function App() {
       console.log('loaded', loaded)
     const elements = document.querySelectorAll('.standin');
 
-    elements.forEach(el => {
-      el.parentNode.removeChild(el);
+    elements.forEach((el: any) => {
+      el?.parentNode?.removeChild(el);
     });
     }
   }, [loadCount, items.length, space]);
 
   useEffect(() => {
     window.addEventListener('message', (event) => {
-      // if (event.origin !== 'http://localhost:8000') {
-      //     // Security check: Ensure that the message is from a trusted source
-      //     return;
-      // }
+
+      if (event.origin !== 'http://155.138.156.102:8002') {
+          // Security check: Ensure that the message is from a trusted source
+          return;
+      }
     
       // Handle the message
       console.log('Message received from iframe:', event.data);
-      console.log(event.data.portal == 'loot' && count == 0)
-      console.log(count)
-      if(event.data.portal == 'loot' && count == 0){
-        console.log('IN HERE')
+      if(event.data.portal == 'loot' && count == 0 && isConnected){
         setInDungeon(false)
-        // console.log(inDungeon_)
-        // inDungeon_ = false
-        // console.log(inDungeon_)
-        // setMutex(true)
-        mint()
+        generate()
         count++
       }
     });
-  }, [])
+  }, [isConnected])
 
-  useEffect(() => {
-
-  }, [socket, loadingTreasure])
-
-
+  
   useEffect(() => {
     setTimeout(async () => {
-      if(isConnected && !init){
-        console.log(init)
-        init = true
-        console.log(init)
-        const proof = await signEthAuthProof(walletClient)
-        const socketRaw = await socketIOClient(ENDPOINT, {
-            query: {
-              address: address,
-              token: proof?.proofString  // Replace with your actual token
-            }
-        })
-        // console.log(socketRaw)
-        socket = socketRaw
-        // setSocket(socketRaw)
+      const proof0 = await signEthAuthProof(walletClient)
+
+      if(proofVar == null || proofVar.toLowerCase() != proof0.proofString.split('.')[1].toLowerCase()){
+
+      if(isConnected && !init && inDungeon){
+          console.log(init)
+          init = true
+          console.log(init)
+          const socketRaw = await socketIOClient(ENDPOINT, {
+              query: {
+                address: address,
+                token: proof0?.proofString  // Replace with your actual token
+              }
+          })
+          proofVar = proof0.proofString.split('.')[1]
+          // console.log(socketRaw)
+          socket = socketRaw
+          console.log(socketRaw)
+          // setSocket(socketRaw)
+          socket.on('disconnected', ()=> {
+            console.log('disconnected')
+          })
       }
+    } else {
+
+      if(!inDungeon && count == 1){
+        setInDungeon(true);
+        setLoaded(false)
+        setMintLoading(false)
+        count = 0
+        init = false
+        setItems([])
+      }
+    }
+
     }, 0)
-  },[isConnected])
+    setInterval(() => {
+      try{
+        const withTimeout = (onSuccess: any, onTimeout: any, timeout: any) => {
+          let called = false;
+        
+          const timer = setTimeout(() => {
+            if (called) return;
+            called = true;
+            onTimeout();
+          }, timeout);
+        
+          return (...args: any) => {
+            //@ts-ignore
+            let self: any = this
+            if (called) return;
+            called = true;
+            clearTimeout(timer);
+            onSuccess.apply(self, args);
+          }
+        }
+        
+        socket.emit("ping", {}, withTimeout(() => {
+          console.log("socket ✅");
+        }, () => {
+          alert('you have 1 too many connections, or, server is down')
+        }, 1000));
+      }catch(err){
+        console.log(err)
+      }
+    }, 4000) 
+  },[address, isConnected, socket])
+
+  const handleScroll = () => {
+    const scrollPosition = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    
+    // Calculate if the scroll is below 90% of the page
+    if ((scrollPosition + windowHeight) / documentHeight > 0.9) {
+      setShowElement(false);
+    } else {
+      setShowElement(true);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+
+    // Clean up the event listener
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const onClick = () => {
     setOpenConnectModal(true)
   }
 
   const mint = async () => {
+    setMintLoading(true)
+
+    socket.emit('mint', {address: address})
+
+    const provider = new ethers.providers.JsonRpcProvider('https://nodes.sequence.app/arbitrum-nova');
+
+    const contract = new ethers.Contract(contractAddress, abi, provider);
+
+    contract.on("Transfer", async (from, to, tokenId, event) => {
+
+      if(to.toLowerCase() == proofVar.toLowerCase()){
+        txHash = event.transactionHash
+        setMintLoading(false)
+      }
+    });
+  }
+  
+  const generate = async () => {
     console.log(socket)
-    // setTimeout(async () => {
-    //   const res = await fetch('http://0.0.0.0:5000')
-    //   const json = await res.json()
-    //   setItems([json.armor, json.weapon])
-    //   // setTimeout(() => {
-    //   //   setLoaded(true);
-    //   // }, 1000);
-    //   // document.getElementById('standin')
-    //   // If the element exists, remove it
-
-
-    // }, 0);
     setLoadingTreasure(true)
-    // setTtreasureIsOpen(true)
 
-    // ERC-1155 contract ABI and address
-    // Create a contract instance
-    // const provider = new ethers.providers.JsonRpcProvider('https://nodes.sequence.app/bsc-testnet');
-
-    // const contract = new ethers.Contract(contractAddress, abi, provider);
-
-    // contract.on("TransferSingle", async (operator, from, to, id, value, event) => {
-    //   console.log(to)
-    //     if(to == address){
-    //       const res = await fetch(`https://metadata.sequence.app/tokens/bsc-testnet/${`0xf744f684a054b142418148abbd9a917f9fae7eaf`}/${id.toString()}`)
-    //       const json = await res.json()
-    //       setImage(json[0].image)
-    //       setTitle(json[0].name)
-    //       toggleModal(true)
-    //       setLoadingTreasure(false)
-    //     }
-    // });
+    const proof1 = await signEthAuthProof(walletClient)
     
-    const proof = await signEthAuthProof(walletClient)
-    
-    socket.emit('collect', {proof: proof, address: address})
+    socket.emit('collect', {proof: proof1, address: address})
     console.log(socket.id)
 
     socket.on('disconnected', ()=> {
       console.log('disconnected')
+      alert('error, duplicate session')
       init =false
     })
 
-    socket.on('test', async (data: any) => {
-      console.log(data)
-      console.log('testing')
+    socket.on('pong', async (data: any) => {
+      console.log('true')
     })
 
     socket.on('loot', async (data: any) => {
-      console.log(data)
-      // let response = await fetch(data + '/0.json') // update to get tokenID
-
-      // const text = await response.text()
-      // const json = JSON.parse(text)
-      // console.log(json)
-      // setTxHash(data)
-      console.log(data[1].data)
-      console.log(data[1].data.url)
       let interval = setInterval(async () => {
         const res = await fetch(data[1].data.url)
         console.log(res.status)
@@ -199,65 +229,14 @@ function App() {
           clearInterval(interval)
           setLoadingTreasure(false)
           setItems([data[1].data])
+          txHash=''
         }
       }, 5000)
-
-      // setImage(data[0].image)
-      // setTitle(data[0].name)
-
-      // const indexer = new SequenceIndexer('https://bsc-testnet-indexer.sequence.app', 'c3bgcU3LkFR9Bp9jFssLenPAAAAAAAAAA')
-
-      // // try any account address you'd like :)
-      // const filter = {
-      //   accountAddress: address
-      // }
-
-      // // query Sequence Indexer for all token transaction history on Polygon
-      // const transactionHistory = await indexer.getTransactionHistory({
-      //   filter: filter,
-      //   includeMetadata: true
-      // })
-        
-      // console.log('transaction history in account:', transactionHistory)
-
-      // transactionHistory.transactions.map((transaction: any, i: any) => {
-      //   if(i == 0){
-      //     transaction.transfers.map(async (transfer: any) => {
-      //       transfer.tokenIds
-      //       const res = await fetch(`https://metadata.sequence.app/tokens/bsc-testnet/${contractAddress}/${transfer.tokenIds[0]}`)
-      //       const json = await res.json()
-      //       console.log(json)
-      //       setImage(json[0].image)
-      //       setTitle(json[0].name)
-      //       toggleModal(true)
-      //       setLoadingTreasure(false)
-      //     })
-      //   }
-      // })
-
-      // setImage(json.image)
-      // setTitle(json.name)
-      // toggleModal(true)
-      // setLoadingTreasure(false)
     })
-
-    // Maybe a quick response toggle for 5-10 seconds vs. 60 seconds
-    // let response = await fetch('http://localhost:8000/api', {
-    //   method: 'POST',
-    //   headers: {
-    //       'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({ proof: proof.proofString, address: address })
-    // });
-
-    // if(response.status == 200){
-    //     const hash = await response.text()
-    //     console.log(hash)
-    //     setTxHash(JSON.parse(hash).txHash)
-    // } else {
-    //   alert('Something went wrong with the request, check the console and try again.')
-    // }
   }
+
+  const iframeRef = useRef<any>(null);
+
   return (
     <>
       {
@@ -295,12 +274,24 @@ function App() {
             inDungeon 
             ? 
             <div>
-            <div style={{color: 'white', position:'fixed', cursor: 'pointer', top: '30px', right: '30px'}} onClick={() => disconnect()}>
+            <div style={{color: 'white', position:'fixed', cursor: 'pointer', top: '30px', right: '30px'}} onClick={() => {setInDungeon(true);
+        setInDungeon(false)
+        setLoaded(false)
+        setMintLoading(false)
+        setLoadingTreasure(false)
+        count = 0
+        init = false
+        setItems([]);
+        socket = null;
+        txHash = '';
+
+        disconnect()}}>
               sign out
               </div>
 
               <div className='container'>
-                <iframe src="http://localhost:8001" width={window.innerWidth} height={window.innerHeight*.76} ></iframe>
+                <iframe id='maze' src={`http://155.138.156.102:8002/${ live ? '?refresh=true' : ''}`} width={window.innerWidth} height={window.innerHeight*.76} ></iframe>
+                {/* <iframe id='maze' src={`https://maze.ngrok.app/${ live ? '?refresh=true' : ''}`} width={window.innerWidth} height={window.innerHeight*.76} ></iframe> */}
               </div>
             </div>
             :
@@ -309,8 +300,11 @@ function App() {
             <div style={{color: 'white', position:'fixed', cursor: 'pointer', top: '30px', right: '30px'}} onClick={() => disconnect()}>
               sign out
             </div>
-            { !loadingTreasure ? <div style={{zIndex: 10, color: 'white', cursor: 'pointer', position:'fixed', bottom: '30px', left: '30px'}} onClick={() => {setInDungeon(true);count=0;setItems([])}}>
-              <Button label='play again?'/>
+            { 
+            !loadingTreasure
+            // true 
+            ? <div style={{zIndex: 10, color: 'white', cursor: 'pointer', position:'fixed', bottom: '30px', left: '30px'}} onClick={() => {txHash = '';socket.emit('cancel', {address: address});live=true;setInDungeon(true);count=0;setItems([])}}>
+              <Button label='back to maze?'/>
             </div> : null}
             <br/>
             {
@@ -324,7 +318,31 @@ function App() {
                   zIndex: 1000,
                 }}
                 >
-                  <Spinner/>
+                  {/* @ts-ignore */}
+                  <div className="frame" tier={'Rare'} style={{textAlign: 'center'}}>
+                    <h1 className="name_Rare devils-note">
+                    <br/>
+                      loot that combines elements from diablo
+                      <br/>
+                      <br/>
+                      it might tell you about your past and what you might need for the future
+                      <br/>
+                      <br/>
+
+                      take a pass <br/>on items
+                      <br/>
+                      <br/>
+
+                      or unlock what you want in this world
+                    </h1>
+                    <br/>
+                    <br/>
+                    <Box justifyContent={'center'}>
+                      <Spinner/>
+                    </Box>
+                    <br/>
+                    <br/>
+                  </div>
                 </div>
               : 
                 null
@@ -335,13 +353,28 @@ function App() {
                 alignItems: 'center',
                 width: '100vw',
               }}
-              // onClick={() => {if(!treasureIsOpen) {mint()}}}
                >
                 <br/>
                 <br/>
                 {loaded ? <div className={`items-container fade-in`} style={{width: '100vw', marginTop: '20px', overFlow: 'auto'}}>
-                {items.map((item, index) => (
+                { !loadingTreasure ? <div style={{zIndex: 10, color: 'white', cursor: 'pointer', position:'fixed', top: '30px', right: txHash != '' ? '45vw': '46vw'}}>
+                { mintLoading ? <div style={{
+                  position: 'fixed', 
+                  left: '50%',      
+                  zIndex: 1000,
+                }}
+                >
+                  <Spinner/>
+                </div> : txHash != '' ? <div style={{
+                  paddingLeft: '20px',
+                  zIndex: 1000,
+                }}
+                ><p style={{color: 'orange'}}><a href={`https://nova.arbiscan.io/tx/${txHash}`} target='_blank'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tx Hash: {txHash.slice(0, 4)}...</a></p></div>: <Button label='mint' onClick={() => mint()}/> }
+                </div> : null }
+                {items.map((item: any, index: any) => (
+                  //@ts-ignore
                   <div key={index} className="frame" tier={item.tier}>
+                    {/*@ts-ignore*/}
                     <div className="view" tier={item.tier}>
                       <img
                         style={{ width: '266px' }}
@@ -358,10 +391,10 @@ function App() {
                     </h2>
                     <hr className="half" />
                     <ul>
-                      {item.main_stats.map((stat, index) => (
+                      {item.main_stats.map((stat: any, index: any) => (
                         <React.Fragment key={index}>
                           <li className={item.category}>{stat}</li>
-                          {item.stats.map((stat, statIndex) => (
+                          {item.stats.map((stat: any, statIndex: any) => (
                             <li key={statIndex}>{stat}</li>
                           ))}
                         </React.Fragment>
@@ -373,38 +406,8 @@ function App() {
                     <Button label='open wallet' onClick={() => setOpenWalletModal(true)}/>
                   </div> : null }
               </div> : null }
-               {/* <div className='container'>
-                <iframe src="http://localhost:5174" width={window.innerWidth} height={window.innerHeight*.93} ></iframe>
-              </div> */}
-            {/* <spline-viewer width={630} height={600} url="https://prod.spline.design/dDjLCxxNJzkswRyq/scene.splinecode"></spline-viewer> */}
+
             </div>
-            <AnimatePresence>
-            {
-              isOpen 
-                && 
-                <Modal  onClose={() => toggleModal(false)}>
-                    <Box
-                      flexDirection="column"
-                      justifyContent="space-between"
-                      height="full"
-                      padding="16"
-                    >
-                    <Box justifyContent={'center'}>
-                    <p>You found a collectible!</p>
-                    </Box>
-                    <Box justifyContent={'center'}>
-                    <p>{title}</p>
-                    </Box>
-                    <Box justifyContent={'center'}>
-                    <img src={image!} width={300}/>
-                    </Box>
-                    <Box justifyContent={'center'}>
-                      <a href={`https://testnet.bscscan.com/tx/${txHash}`}>Tx Hash: {txHash.slice(0,20)}...</a>
-                    </Box>
-                    </Box>
-                </Modal>
-            }
-            </AnimatePresence>
             </>
           }
           </>
