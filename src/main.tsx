@@ -9,11 +9,11 @@ import { KitWalletProvider } from '@0xsequence/kit-wallet'
 
 import { configureChains, createConfig, WagmiConfig } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
-import { bsc } from 'wagmi/chains'
+import { arbitrumNova } from 'wagmi/chains'
 
 function Dapp() {
 	const { chains, publicClient, webSocketPublicClient } = configureChains(
-		[bsc],
+		[arbitrumNova],
 		[publicProvider()],
 	)
   
@@ -21,13 +21,13 @@ function Dapp() {
 		google({
 			chains,
 			options: {
-				defaultNetwork: 56
+				defaultNetwork: 42170
 			}
 		}),
 		apple({
 			chains,
 			options: {
-				defaultNetwork: 56
+				defaultNetwork: 42170
 			}
 		}),
 		metamask({
@@ -36,7 +36,7 @@ function Dapp() {
 		email({
 			chains,
 			options: {
-				defaultNetwork: 56
+				defaultNetwork: 42170
 			}
 		})
 	])  
@@ -52,11 +52,17 @@ function Dapp() {
 		projectAccessKey: 'qXo22RTxznHmanNpf1ftKeQBAAAAAAAAA',
 		position: 'center',
 		defaultTheme: 'dark',
+		displayedAssets: [
+			{
+				contractAddress: '0xdc85610fd15b64d1b48db4ebaabc61ee2f62fb6d',
+				chainId: 42170
+			}
+		],
 		signIn: {
 			projectName: 'lootbox',
 			showEmailInput: true,
 			socialAuthOptions: ['google', 'apple'],
-			walletAuthOptions: ['metamask']
+			walletAuthOptions: []
 		}
 	}
 
