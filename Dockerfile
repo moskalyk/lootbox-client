@@ -2,6 +2,8 @@
 # Use a Node.js base image to build the React app
 FROM node:18 as build-stage
 
+RUN npm install -g pnpm
+
 # Set the working directory in the Docker container
 WORKDIR /app
 
@@ -11,7 +13,8 @@ COPY package*.json ./
 # COPY yarn.lock ./
 
 # Install the project dependencies
-RUN npm install
+RUN pnpm install
+
 # If you are using yarn, uncomment the next line and delete the npm install line
 # RUN yarn install
 
@@ -19,7 +22,7 @@ RUN npm install
 COPY . .
 
 # Build the app
-RUN npm run build
+RUN pnpm run build
 # If you are using yarn, uncomment the next line and delete the npm run build line
 # RUN yarn build
 
