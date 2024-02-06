@@ -1,39 +1,17 @@
-# Step 1: Build the application
-# Use a Node.js base image to build the React app
-FROM node:18 as build-stage
-
-RUN npm install -g pnpm
+# Use a Node.js base image
+FROM node:18
 
 # Set the working directory in the Docker container
 WORKDIR /app
 
-# Copy the package.json and package-lock.json (or yarn.lock) files
-COPY package*.json ./
-# If you are using yarn, uncomment the next line and delete the npm install line
-# COPY yarn.lock ./
+# Install the 'serve' package globally
+RUN npm install -g serve
 
-# Install the project dependencies
-RUN pnpm install
+# Copy the built static files from your dist folder to the Docker image
+COPY ./dist /app
 
-# If you are using yarn, uncomment the next line and delete the npm install line
-# RUN yarn install
+# Expose the port that 'serve' will run on
+EXPOSE 2000
 
-# Copy the rest of your app's source code from your host to your image filesystem.
-COPY . .
-
-# Build the app
-RUN pnpm run build
-# If you are using yarn, uncomment the next line and delete the npm run build line
-# RUN yarn build
-
-# Step 2: Serve the application using Nginx
-FROM nginx:alpine as production-stage
-
-# Copy the built app to the Nginx server
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-
-# Expose port 80 to the outside once the container has launched
-EXPOSE 80
-
-# Start Nginx and keep it running in the foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Command to serve the app using 'serve'
+CMD ["serve", "-s", ".", "-l", "2000"]
