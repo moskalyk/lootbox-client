@@ -10,12 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "0xsequence": "^1.4.9",
+    "0xsequence": "1.4.9",
     "@0xsequence/design-system": "^1.1.2",
     "@0xsequence/indexer": "^1.4.9",
-    "@0xsequence/kit": "^1.0.8",
-    "@0xsequence/kit-connectors": "^1.0.7",
-    "@0xsequence/kit-wallet": "^1.0.7",
+    "@0xsequence/kit": "1.0.8",
+    "@0xsequence/kit-connectors": "1.0.7",
+    "@0xsequence/kit-wallet": "1.0.7",
     "@0xsequence/metadata": "^1.4.9",
     "@react-three/drei": "^9.88.17",
     "@react-three/fiber": "^8.15.11",
