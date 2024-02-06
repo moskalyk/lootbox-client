@@ -1,6 +1,6 @@
 # Step 1: Build the application
 # Use a Node.js base image to build the React app
-FROM node:16 as build-stage
+FROM node:18 as build-stage
 
 # Set the working directory in the Docker container
 WORKDIR /app
