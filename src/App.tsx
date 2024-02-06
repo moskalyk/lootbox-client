@@ -68,7 +68,7 @@ function App() {
   useEffect(() => {
     window.addEventListener('message', (event) => {
 
-      if (event.origin !== 'http://155.138.156.102:8002') {
+      if (event.origin !== 'https://maze-inky.vercel.app') {
           // Security check: Ensure that the message is from a trusted source
           return;
       }
@@ -285,7 +285,7 @@ function App() {
               </div>
 
               <div className='container'>
-                <iframe id='maze' src={`http://155.138.156.102:8002/${ live ? '?refresh=true' : ''}`} width={window.innerWidth} height={window.innerHeight*.76} ></iframe>
+                <iframe id='maze' src={`https://maze-inky.vercel.app/${ live ? '?refresh=true' : ''}`} width={window.innerWidth} height={window.innerHeight*.76} ></iframe>
                 {/* <iframe id='maze' src={`https://maze.ngrok.app/${ live ? '?refresh=true' : ''}`} width={window.innerWidth} height={window.innerHeight*.76} ></iframe> */}
               </div>
             </div>
