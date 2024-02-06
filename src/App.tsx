@@ -11,7 +11,7 @@ import { useOpenWalletModal } from '@0xsequence/kit-wallet'
 import './lootExpanse/styles.css'
 
 // const ENDPOINT = "http://localhost:3000"; 
-const ENDPOINT = "http://155.138.156.102:3000"; 
+const ENDPOINT = "https://nodejs-production-9249.up.railway.app:3000"; 
 // const ENDPOINT = "https://lootbox.ngrok.dev";
 const contractAddress = "0xdc85610fd15b64d1b48db4ebaabc61ee2f62fb6d";
 
